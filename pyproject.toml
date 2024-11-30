@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "fastsrtmaker"
+version = "0.1.0"
+description = ""
+authors = ["kasen <kasen@kasen.win>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+moviepy = "^2.1.1"
+ffmpeg-python = "^0.2.0"
+torch = "^2.5.1"
+transformers = "^4.46.3"
+insanely-fast-whisper = "^0.0.15"
+opencc = "^1.1.9"
+sacremoses = "^0.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

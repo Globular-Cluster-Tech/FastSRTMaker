@@ -1,28 +1,79 @@
 #!/bin/bash
 
 
+
+# 检查xcode是否安装
+if ! xcode-select -p; then
+    echo "xcode未安装，正在安装...，安装成功后请重新运行安装脚本"
+    sudo xcode-select --install
+    exit 1
+fi
+
+
 # 下载项目,下载python 3.10，安装poetry，安装项目依赖，安装brew，安装ffmpeg，添加命令到/usr/bin/fastsrtmaker
 
 # 检查并安装 Homebrew
-if ! command -v brew &> /dev/null; then
+if ! command -v /opt/homebrew/bin/brew &> /dev/null; then
     echo "正在安装 Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 else
     echo "Homebrew 已安装"
 fi
 
-# 安装 Python 3.10
-echo "正在安装 Python 3.10..."
-brew install python@3.10
+# 检查当前shell，如果PATH中不包含brew目录，添加PATH到配置文件中
+
+SHELL_COMMAN=$(echo $SHELL | sed 's/.*\///')
+if [[ $SHELL_COMMAN == "zsh" ]]; then
+    if ! grep -q "/opt/homebrew/bin" ~/.zshrc; then
+        echo 'export PATH="/opt/homebrew/bin:$PATH"' >> ~/.zshrc
+    fi
+elif [[ $SHELL_COMMAN == "bash" ]]; then
+    if ! grep -q "/opt/homebrew/bin" ~/.bash_profile; then
+        echo 'export PATH="/opt/homebrew/bin:$PATH"' >> ~/.bash_profile
+    fi
+fi
+
+# SHELL配置生效
+export PATH="/opt/homebrew/bin:$PATH"
 
 # 安装 ffmpeg
 echo "正在安装 ffmpeg..."
-brew install ffmpeg
+brew install ffmpeg 1>>/tmp/fastsrtmaker.log 2>&1
+
+
+
+
+# 安装 Python 3.10
+echo "正在安装 Python 3.10..."
+brew install pyenv pyenv-virtualenv 1>>/tmp/fastsrtmaker.log 2>&1
+
+# 添加 pyenv 配置到 shell 配置文件
+
+if ! grep -q "pyenv init" ~/."$SHELL_COMMAN"rc; then
+    echo 'eval "$(pyenv init --path)"' >> ~/."$SHELL_COMMAN"rc
+    echo 'eval "$(pyenv init -)"' >> ~/."$SHELL_COMMAN"rc
+    echo 'eval "$(pyenv virtualenv-init -)"' >> ~/."$SHELL_COMMAN"rc
+fi
+
+# SHELL配置生效
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+
+pyenv global system
+
+pyenv install 3.10 1>>/tmp/fastsrtmaker.log 2>&1
+
+pyenv virtualenv 3.10 FastSRTMaker
+pyenv activate FastSRTMaker
+
 
 # 安装 poetry
 echo "正在安装 Poetry..."
-python3.10 -m pip install --upgrade pip
-python3.10 -m pip install poetry
+pip install --upgrade pip 1>>/tmp/fastsrtmaker.log 2>&1
+pip install poetry 1>>/tmp/fastsrtmaker.log 2>&1
+
+
 
 # 创建临时目录并克隆项目
 # 检查并创建临时目录
@@ -47,27 +98,34 @@ if [ -d "$TMP_DIR" ]; then
         exit 1
     fi
 else
-    git clone https://github.com/yaule/FastSRTMaker.git  "$TMP_DIR"
+    git clone https://github.com/yaule/FastSRTMaker.git -b dev "$TMP_DIR"
 fi
 
 cd "$TMP_DIR"
 
-
-
-
-
 # 使用 Poetry 安装依赖
 echo "正在安装项目依赖..."
-poetry install
+poetry install 1>>/tmp/fastsrtmaker.log 2>&1
 
 # 创建启动脚本
-cat > /usr/local/bin/fastsrtmaker << 'EOF'
-#!/bin/bash
-cd "$TMP_DIR/FastSRTMaker"
-poetry run python main.py "$@"
+echo "正在创建启动脚本..."
+
+if [ ! -d /usr/local/bin ]; then
+    sudo mkdir -p /usr/local/bin
+fi
+
+
+
+sudo tee /usr/local/bin/fastsrtmaker <<EOF
+#!/bin/zsh
+source ~/."$SHELL_COMMAN"rc
+cd "$TMP_DIR/"
+pyenv activate FastSRTMaker
+python3.10 main.py "\$@"
+pyenv deactivate
 EOF
 
 # 添加执行权限
-chmod +x /usr/local/bin/fastsrtmaker
+sudo chmod +x /usr/local/bin/fastsrtmaker
 
 echo "安装完成！现在可以使用 fastsrtmaker 命令了。"

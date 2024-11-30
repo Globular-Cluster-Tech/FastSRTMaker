@@ -1,25 +1,28 @@
 #!/bin/bash
 
+# 删除shell配置
+
+SHELL_COMMAN=$(echo $SHELL | sed 's/.*\///')
+
+sed -i '' '/pyenv/d' ~/."$SHELL_COMMAN"rc
+sed -i '' '/\/opt\/homebrew\/bin\:/d' ~/."$SHELL_COMMAN"rc
+
+
 # 删除项目目录
 rm -rf ~/Library/fastsrtmaker
 
 # 删除命令
-rm -f /usr/bin/fastsrtmaker
+sudo rm -f /usr/local/bin/fastsrtmaker
 
-# 删除poetry环境
-rm -rf ~/Library/Caches/pypoetry
+# 删除pyenv
+rm -rf $(pyenv root)/
 
-# 删除python 3.10
-brew uninstall python@3.10
 
 # 删除ffmpeg
-brew uninstall ffmpeg
+brew uninstall pyenv pyenv-virtualenv ffmpeg 1>>/tmp/fastsrtmaker.log 2>&1
 
 # 删除homebrew
-brew uninstall --zap homebrew
-
-
-
+echo "brew uninstall --zap homebrew && sudo rm -rf /opt/homebrew"
 
 echo "卸载完成！"
 

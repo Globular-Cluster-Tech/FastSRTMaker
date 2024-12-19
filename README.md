@@ -19,7 +19,7 @@ sudo xcode-select --install
 
 在命令行中运行以下命令安装：
 ```sh
-curl -sL https://raw.githubusercontent.com/Globular-Cluster-Tech/FastSRTMaker/refs/heads/main/install.sh | bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Globular-Cluster-Tech/FastSRTMaker/refs/heads/main/install.sh)"
 ```
 
 
@@ -39,7 +39,7 @@ fastsrtmaker <srt_path>
 ## 卸载
 
 ```sh
-curl -sL https://raw.githubusercontent.com/Globular-Cluster-Tech/FastSRTMaker/refs/heads/main/uninstall.sh | bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Globular-Cluster-Tech/FastSRTMaker/refs/heads/main/uninstall.sh)"
 ```
 
 

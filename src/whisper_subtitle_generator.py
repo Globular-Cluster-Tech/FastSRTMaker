@@ -3,21 +3,137 @@ import subprocess
 import json
 import opencc
 from typing import Dict, List
-import logging
+from pathlib import Path
+import pysrt
+import tempfile
+from src import logger
 
-logger = logging.getLogger('fastsrtmaker.generator')
 
 class WhisperSubtitleGenerator:
     def __init__(self, languages=None):
+        """
+        初始化字幕生成器
+        :param translator: 翻译器实例
+        :param config: Whisper 配置字典
+        """
         logger.debug("初始化字幕生成器")
+
         self.cc = opencc.OpenCC("s2t")  # 创建 OpenCC 实例用于简体到繁体转换
-        self.translator = None  # 将在需要时初始化
         self.languages = languages or []
+
+
+    def get_media_info(self, input_path: str) -> dict:
+        """获取媒体文件信息"""
+        try:
+            cmd = [
+                'ffprobe',
+                '-v', 'quiet',
+                '-print_format', 'json',
+                '-show_format',
+                '-show_streams',
+                input_path
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise Exception(f"ffprobe 执行失败: {result.stderr}")
+            
+            probe_data = json.loads(result.stdout)
+            
+            # 基本信息
+            format_info = probe_data['format']
+            info = {
+                'filename': Path(input_path).name,
+                'format': format_info.get('format_name', 'unknown'),
+                'duration': float(format_info.get('duration', 0)),
+                'size': int(format_info.get('size', 0)),
+                'bit_rate': int(format_info.get('bit_rate', 0)),
+                'streams': []
+            }
+            
+            # 流信息
+            for stream in probe_data['streams']:
+                stream_info = {
+                    'codec_type': stream.get('codec_type', 'unknown'),
+                    'codec_name': stream.get('codec_name', 'unknown'),
+                }
+                
+                # 视频流特有信息
+                if stream.get('codec_type') == 'video':
+                    fps = stream.get('r_frame_rate', '0/1').split('/')
+                    fps = float(fps[0]) / float(fps[1]) if len(fps) == 2 else 0
+                    
+                    stream_info.update({
+                        'width': stream.get('width', 0),
+                        'height': stream.get('height', 0),
+                        'fps': fps
+                    })
+                
+                # 音频流特有信息
+                elif stream.get('codec_type') == 'audio':
+                    stream_info.update({
+                        'sample_rate': stream.get('sample_rate', '0'),
+                        'channels': stream.get('channels', 0)
+                    })
+                
+                info['streams'].append(stream_info)
+            
+            return info
+            
+        except Exception as e:
+            logger.error(f"获取媒体信息失败: {e}")
+            return {}
+
+    def format_size(self, size_bytes: int) -> str:
+        """格式化文件大小"""
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size_bytes < 1024:
+                return f"{size_bytes:.2f} {unit}"
+            size_bytes /= 1024
+        return f"{size_bytes:.2f} TB"
+
+    def format_time(self, seconds: float) -> str:
+        """格式化时间"""
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        seconds = int(seconds % 60)
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    def log_media_info(self, media_info: dict):
+        """输出媒体信息日志"""
+        if not media_info:
+            return
+
+        # 分隔线
+        separator = "-" * 50
+        logger.info(separator)
+        logger.info("媒体文件信息:")
+        logger.info(f"文件名: {media_info['filename']}")
+        logger.info(f"格式: {media_info['format']}")
+        logger.info(f"时长: {self.format_time(media_info['duration'])}")
+        logger.info(f"大小: {self.format_size(media_info['size'])}")
+        logger.info(f"比特率: {media_info['bit_rate'] // 1000} kbps")
+        
+        # 输出流信息
+        for stream in media_info['streams']:
+            if stream['codec_type'] == 'video':
+                logger.info(f"视频流: {stream['codec_name']} "
+                          f"{stream['width']}x{stream['height']} "
+                          f"@ {stream['fps']:.2f}fps")
+            elif stream['codec_type'] == 'audio':
+                logger.info(f"音频流: {stream['codec_name']} "
+                          f"{stream['sample_rate']}Hz "
+                          f"{stream['channels']}ch")
+        logger.info(separator)
+
 
     def generate_subtitles(self, input_path: str, language: str, translate: bool, device_id: str, model_name: str):
         """生成字幕文件"""
         if not os.path.exists(input_path):
             raise FileNotFoundError(f"文件不存在: {input_path}")
+
+        media_info = self.get_media_info(input_path)
+        self.log_media_info(media_info)
 
         output_dir = os.path.dirname(input_path)
         base_name = os.path.splitext(os.path.basename(input_path))[0]
@@ -86,7 +202,7 @@ class WhisperSubtitleGenerator:
             "traditional": os.path.join(output_dir, f"{base_name}_zh_hant.srt")
         }
 
-        # 添加其他语言的输出路径
+        # 添加其他语���的输出路径
         for lang in self.languages:
             subtitle_paths[lang["name"]] = os.path.join(
                 output_dir, 

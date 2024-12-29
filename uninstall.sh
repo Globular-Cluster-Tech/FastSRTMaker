@@ -22,6 +22,7 @@ rm -rf $(pyenv root)/
 brew uninstall pyenv pyenv-virtualenv ffmpeg 1>>/tmp/fastsrtmaker.log 2>&1
 
 # 删除homebrew
+echo "卸载homebrew，如果你知道是什么，请手动删除；如果不知道，请忽略！"
 echo "brew uninstall --zap homebrew && sudo rm -rf /opt/homebrew"
 
 echo "卸载完成！"

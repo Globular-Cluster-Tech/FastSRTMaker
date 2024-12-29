@@ -15,6 +15,9 @@ insanely-fast-whisper = "^0.0.15"
 sacremoses = "0.0.53"
 argostranslate = "^1.9.6"
 opencc = "^1.1.9"
+psutil = "^6.1.1"
+openai-whisper = "^20240930"
+pysrt = "^1.1.2"
 
 
 [build-system]

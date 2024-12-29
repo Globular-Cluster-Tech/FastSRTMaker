@@ -37,15 +37,25 @@ fi
 export PATH="/opt/homebrew/bin:$PATH"
 
 # 安装 ffmpeg
-echo "正在安装 ffmpeg..."
-brew install ffmpeg 1>>/tmp/fastsrtmaker.log 2>&1
-
+if ! command -v /opt/homebrew/bin/ffmpeg &> /dev/null; then
+    echo "正在安装 ffmpeg..."
+    brew install ffmpeg 1>>/tmp/fastsrtmaker.log 2>&1
+fi
 
 
 
 # 安装 Python 3.10
-echo "正在安装 Python 3.10..."
-brew install pyenv pyenv-virtualenv 1>>/tmp/fastsrtmaker.log 2>&1
+if ! command -v /opt/homebrew/bin/pyenv &> /dev/null; then
+    echo "正在安装 pyenv ..."
+    brew install pyenv 1>>/tmp/fastsrtmaker.log 2>&1
+fi
+
+if ! command -v /opt/homebrew/bin/pyenv-virtualenv &> /dev/null; then
+    echo "正在安装 pyenv-virtualenv ..."
+    brew install pyenv-virtualenv 1>>/tmp/fastsrtmaker.log 2>&1
+fi
+
+
 
 # 添加 pyenv 配置到 shell 配置文件
 
@@ -60,18 +70,21 @@ eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
-pyenv global system
+pyenv global system  &> /dev/null
 
-pyenv install 3.10 1>>/tmp/fastsrtmaker.log 2>&1
+# 安装 python 3.10
+if ! pyenv versions | grep -q "3.10"; then
+    pyenv install 3.10 1>>/tmp/fastsrtmaker.log 2>&1
+    pyenv virtualenv 3.10 FastSRTMaker 1>>/tmp/fastsrtmaker.log 2>&1
 
-pyenv virtualenv 3.10 FastSRTMaker
-pyenv activate FastSRTMaker
+fi
+pyenv activate FastSRTMaker 1>>/tmp/fastsrtmaker.log 2>&1
 
 
 # 安装 poetry
 echo "正在安装 Poetry..."
 pip install --upgrade pip 1>>/tmp/fastsrtmaker.log 2>&1
-pip install poetry 1>>/tmp/fastsrtmaker.log 2>&1
+pip install -U poetry 1>>/tmp/fastsrtmaker.log 2>&1
 
 
 
@@ -91,6 +104,7 @@ if [ -d "$TMP_DIR" ]; then
             exit 1
         fi
         echo "项目目录已存在且为当前项目，继续安装..."
+        git pull 1>>/tmp/fastsrtmaker.log 2>&1
         cd -
     else
         echo "错误: $TMP_DIR 目录已存在，但不是git仓库。"
@@ -118,11 +132,20 @@ fi
 
 sudo tee /usr/local/bin/fastsrtmaker <<EOF
 #!/bin/zsh
-source ~/."$SHELL_COMMAN"rc
+source ~/.$(echo $SHELL_COMMAN)rc 1>>/dev/null 2>&1
 cd "$TMP_DIR/"
-pyenv activate FastSRTMaker
+pyenv activate FastSRTMaker 1>>/dev/null 2>&1
+
+GIT_OUTPUT=\$(git pull)
+
+if [[ "\$GIT_OUTPUT" != 'Already up to date.' ]]; then
+    poetry install
+fi
+
+poetry shell 1>>/dev/null 2>&1
 python3.10 main.py "\$@"
-pyenv deactivate
+
+pyenv deactivate 1>>/dev/null 2>&1
 EOF
 
 # 添加执行权限

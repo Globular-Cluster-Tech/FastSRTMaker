@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+GIT_BRANCH="main"
 
 # 检查xcode是否安装
 if ! xcode-select -p; then
@@ -104,6 +104,7 @@ if [ -d "$TMP_DIR" ]; then
             exit 1
         fi
         echo "项目目录已存在且为当前项目，继续安装..."
+        git checkout $GIT_BRANCH 1>>/tmp/fastsrtmaker.log 2>&1
         git pull 1>>/tmp/fastsrtmaker.log 2>&1
         cd -
     else
@@ -112,7 +113,7 @@ if [ -d "$TMP_DIR" ]; then
         exit 1
     fi
 else
-    git clone https://github.com/yaule/FastSRTMaker.git -b main "$TMP_DIR"
+    git clone https://github.com/yaule/FastSRTMaker.git -b $GIT_BRANCH "$TMP_DIR"
 fi
 
 cd "$TMP_DIR"

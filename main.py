@@ -69,9 +69,9 @@ class WhisperConfig:
         logger.info(f"检测到系统内存: {memory_gb}GB")
         
         # 根据内存大小选择模型和批处理大小
-        if memory_gb >= 24:
+        if memory_gb >= 16:
             self.model = "large-v3-turbo"
-            self.batch_size = 24
+            self.batch_size = 16
             logger.info("选择 large-v3-turbo 模型 (适中内存)")
         else:
             self.model = "small"

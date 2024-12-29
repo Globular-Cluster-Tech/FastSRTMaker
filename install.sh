@@ -139,13 +139,15 @@ pyenv activate FastSRTMaker 1>>/dev/null 2>&1
 GIT_OUTPUT=\$(git pull)
 
 if [[ "\$GIT_OUTPUT" != 'Already up to date.' ]]; then
-    poetry install
+    poetry install 1>>/dev/null 2>&1
 fi
 
 poetry shell 1>>/dev/null 2>&1
+
 python3.10 main.py "\$@"
 
 pyenv deactivate 1>>/dev/null 2>&1
+
 EOF
 
 # 添加执行权限

@@ -11,15 +11,18 @@ from src import logger
 
 class WhisperSubtitleGenerator:
     def __init__(self, languages=None):
+        
         """
         初始化字幕生成器
         :param translator: 翻译器实例
         :param config: Whisper 配置字典
         """
-        logger.debug("初始化字幕生成器")
 
+        logger.debug("初始化字幕生成器")
         self.cc = opencc.OpenCC("s2t")  # 创建 OpenCC 实例用于简体到繁体转换
+        self.translator = None  # 将在需要时初始化
         self.languages = languages or []
+
 
 
     def get_media_info(self, input_path: str) -> dict:
@@ -126,14 +129,15 @@ class WhisperSubtitleGenerator:
                           f"{stream['channels']}ch")
         logger.info(separator)
 
-
     def generate_subtitles(self, input_path: str, language: str, translate: bool, device_id: str, model_name: str):
         """生成字幕文件"""
         if not os.path.exists(input_path):
             raise FileNotFoundError(f"文件不存在: {input_path}")
 
+
         media_info = self.get_media_info(input_path)
         self.log_media_info(media_info)
+
 
         output_dir = os.path.dirname(input_path)
         base_name = os.path.splitext(os.path.basename(input_path))[0]
@@ -202,7 +206,7 @@ class WhisperSubtitleGenerator:
             "traditional": os.path.join(output_dir, f"{base_name}_zh_hant.srt")
         }
 
-        # 添加其他语���的输出路径
+        # 添加其他语言的输出路径
         for lang in self.languages:
             subtitle_paths[lang["name"]] = os.path.join(
                 output_dir, 

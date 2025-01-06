@@ -15,10 +15,18 @@ def setup_logger(debug_mode=False):
     console_handler.setLevel(log_level)
     
     # 设置日志格式
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
+    if debug_mode:
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - [%(filename)s:%(lineno)s - %(funcName)20s() ] - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+    else:
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - [%(filename)s] - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+
+    
     console_handler.setFormatter(formatter)
     
     # 添加处理程序到记录器

@@ -1,22 +1,19 @@
 import argostranslate.package
 import argostranslate.translate
-import logging
+from src import logger
 from typing import Dict, Optional
 import torch
 import warnings
 from functools import lru_cache
 
-# 设置日志
-logger = logging.getLogger('fastsrtmaker.translator')
-logging.basicConfig(level=logging.INFO)
 
 # 忽略 FutureWarning
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 class Translator:
-    def __init__(self, languages=None, log_level=logging.INFO):
+    def __init__(self, languages=None):
         """初始化翻译器"""
-        logger.setLevel(log_level)
+        # logger.setLevel(log_level)
         logger.debug("初始化翻译器")
         self.languages = languages or []
         self._install_language_packages()

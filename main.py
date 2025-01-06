@@ -39,11 +39,6 @@ DEFAULT_LANGUAGES = [
 ]
 
 
-
-# 配置日志
-# logger = logging.getLogger('fastsrtmaker.main')
-
-
 class WhisperConfig:
     def __init__(self):
         self.model = "small"

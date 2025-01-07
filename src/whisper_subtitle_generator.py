@@ -11,17 +11,29 @@ from src import logger
 
 class WhisperSubtitleGenerator:
     def __init__(self, languages=None):
+<<<<<<< HEAD
+=======
+        
+>>>>>>> dev
         """
         初始化字幕生成器
         :param translator: 翻译器实例
         :param config: Whisper 配置字典
         """
+<<<<<<< HEAD
+=======
+
+>>>>>>> dev
         logger.debug("初始化字幕生成器")
 
         self.cc = opencc.OpenCC("s2t")  # 创建 OpenCC 实例用于简体到繁体转换
         self.languages = languages or []
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> dev
     def get_media_info(self, input_path: str) -> dict:
         """获取媒体文件信息"""
         try:
@@ -126,15 +138,26 @@ class WhisperSubtitleGenerator:
                           f"{stream['channels']}ch")
         logger.info(separator)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> dev
     def generate_subtitles(self, input_path: str, language: str, translate: bool, device_id: str, model_name: str):
         """生成字幕文件"""
         if not os.path.exists(input_path):
             raise FileNotFoundError(f"文件不存在: {input_path}")
 
+<<<<<<< HEAD
         media_info = self.get_media_info(input_path)
         self.log_media_info(media_info)
 
+=======
+
+        media_info = self.get_media_info(input_path)
+        self.log_media_info(media_info)
+
+
+>>>>>>> dev
         output_dir = os.path.dirname(input_path)
         base_name = os.path.splitext(os.path.basename(input_path))[0]
         

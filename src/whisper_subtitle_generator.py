@@ -183,7 +183,7 @@ class WhisperSubtitleGenerator:
                           f"{stream['channels']}ch")
         logger.info(separator)
 
-    def generate_subtitles(self, input_path: str, language: str, translate: bool, device_id: str, model_name: str):
+    def generate_subtitles(self, input_path: str, device_id: str, model_name: str):
         """生成字幕文件"""
         if not os.path.exists(input_path):
             raise FileNotFoundError(f"文件不存在: {input_path}")
@@ -204,15 +204,12 @@ class WhisperSubtitleGenerator:
             '--transcript-path', json_path
         ]
 
-        if translate:
-            command.append('--translate')
-
         result = subprocess.run(command, capture_output=True, text=True)
 
         if result.returncode != 0:
             raise RuntimeError(f"生成字幕失败: {result.stderr}")
 
-        srt_path = os.path.join(output_dir, f"{base_name}_{language}.srt")
+        srt_path = os.path.join(output_dir, f"{base_name}.srt")
         
         self._json_to_srt(json_path, srt_path)
         

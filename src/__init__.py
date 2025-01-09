@@ -1,37 +1,24 @@
 import logging
 import os
+import coloredlogs
 
 # 配置日志记录
 def setup_logger(debug_mode=False):
     """设置日志记录器"""
     log_level = logging.DEBUG if debug_mode else logging.INFO
-    
+
     # 创建日志记录器
     logger = logging.getLogger('fastsrtmaker')
     logger.setLevel(log_level)
-    
-    # 创建控制台处理程序
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(log_level)
-    
-    # 设置日志格式
-    if debug_mode:
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - [%(filename)s:%(lineno)s - %(funcName)20s() ] - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-    else:
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - [%(filename)s] - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
 
-    
-    console_handler.setFormatter(formatter)
-    
-    # 添加处理程序到记录器
-    logger.addHandler(console_handler)
-    
+    # 设置 coloredlogs（自动添加 StreamHandler）
+    if debug_mode:
+        fmt = '%(asctime)s - %(name)s - [%(filename)s:%(lineno)s - %(funcName)20s() ] - %(levelname)s - %(message)s'
+    else:
+        fmt = '%(asctime)s - %(name)s - [%(filename)s] - %(levelname)s - %(message)s'
+
+    coloredlogs.install(level=log_level, logger=logger, fmt=fmt, datefmt='%Y-%m-%d %H:%M:%S')
+
     return logger
 
 # 创建日志记录器实例

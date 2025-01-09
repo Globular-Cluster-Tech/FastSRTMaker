@@ -108,8 +108,6 @@ def process_media_file(input_path: str, device_id: str, model_name: str, generat
 
     subtitle_paths = generator.generate_subtitles(
         input_path=audio_path,
-        language='zh',
-        translate=False,
         device_id=device_id,
         model_name=model_name
     )

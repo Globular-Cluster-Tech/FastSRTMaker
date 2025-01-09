@@ -11,60 +11,80 @@ from src import logger
 
 class WhisperSubtitleGenerator:
     def __init__(self, languages=None):
-<<<<<<< HEAD
-=======
-        
->>>>>>> dev
         """
         初始化字幕生成器
         :param translator: 翻译器实例
         :param config: Whisper 配置字典
         """
-<<<<<<< HEAD
-=======
-
->>>>>>> dev
         logger.debug("初始化字幕生成器")
 
         self.cc = opencc.OpenCC("s2t")  # 创建 OpenCC 实例用于简体到繁体转换
         self.languages = languages or []
 
-
-<<<<<<< HEAD
-=======
-
->>>>>>> dev
     def get_media_info(self, input_path: str) -> dict:
         """获取媒体文件信息"""
         try:
+            # 检查文件是否存在
+            if not Path(input_path).exists():
+                raise FileNotFoundError(f"文件不存在: {input_path}")
+            
             cmd = [
                 'ffprobe',
                 '-v', 'quiet',
                 '-print_format', 'json',
                 '-show_format',
                 '-show_streams',
-                input_path
+                str(input_path)  # 确保路径是字符串
             ]
             
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode != 0:
-                raise Exception(f"ffprobe 执行失败: {result.stderr}")
+            # 检查 ffprobe 是否可用
+            try:
+                subprocess.run(['ffprobe', '-version'], capture_output=True, check=True)
+            except (subprocess.SubprocessError, FileNotFoundError):
+                logger.error("ffprobe 未安装或不可用")
+                return {}
             
-            probe_data = json.loads(result.stdout)
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            
+            try:
+                probe_data = json.loads(result.stdout)
+            except json.JSONDecodeError:
+                logger.error("解析媒体信息失败")
+                return {}
             
             # 基本信息
-            format_info = probe_data['format']
+            format_info = probe_data.get('format', {})
+            if not format_info:
+                logger.error("无法获取媒体格式信息")
+                return {}
+            
+            # 安全地获取数值，提供默认值
+            try:
+                duration = float(format_info.get('duration', '0'))
+            except (TypeError, ValueError):
+                duration = 0.0
+            
+            try:
+                size = int(format_info.get('size', '0'))
+            except (TypeError, ValueError):
+                size = 0
+            
+            try:
+                bit_rate = int(format_info.get('bit_rate', '0'))
+            except (TypeError, ValueError):
+                bit_rate = 0
+            
             info = {
                 'filename': Path(input_path).name,
                 'format': format_info.get('format_name', 'unknown'),
-                'duration': float(format_info.get('duration', 0)),
-                'size': int(format_info.get('size', 0)),
-                'bit_rate': int(format_info.get('bit_rate', 0)),
+                'duration': duration,
+                'size': size,
+                'bit_rate': bit_rate,
                 'streams': []
             }
             
             # 流信息
-            for stream in probe_data['streams']:
+            for stream in probe_data.get('streams', []):
                 stream_info = {
                     'codec_type': stream.get('codec_type', 'unknown'),
                     'codec_name': stream.get('codec_name', 'unknown'),
@@ -73,19 +93,37 @@ class WhisperSubtitleGenerator:
                 # 视频流特有信息
                 if stream.get('codec_type') == 'video':
                     fps = stream.get('r_frame_rate', '0/1').split('/')
-                    fps = float(fps[0]) / float(fps[1]) if len(fps) == 2 else 0
+                    try:
+                        fps = float(fps[0]) / float(fps[1]) if len(fps) == 2 else 0
+                    except (ValueError, ZeroDivisionError, TypeError):
+                        fps = 0
+                    
+                    try:
+                        width = int(stream.get('width', '0'))
+                    except (TypeError, ValueError):
+                        width = 0
+                    
+                    try:
+                        height = int(stream.get('height', '0'))
+                    except (TypeError, ValueError):
+                        height = 0
                     
                     stream_info.update({
-                        'width': stream.get('width', 0),
-                        'height': stream.get('height', 0),
-                        'fps': fps
+                        'width': width,
+                        'height': height,
+                        'fps': round(fps, 2)
                     })
                 
                 # 音频流特有信息
                 elif stream.get('codec_type') == 'audio':
+                    try:
+                        channels = int(stream.get('channels', '0'))
+                    except (TypeError, ValueError):
+                        channels = 0
+                    
                     stream_info.update({
                         'sample_rate': stream.get('sample_rate', '0'),
-                        'channels': stream.get('channels', 0)
+                        'channels': channels
                     })
                 
                 info['streams'].append(stream_info)
@@ -93,8 +131,15 @@ class WhisperSubtitleGenerator:
             return info
             
         except Exception as e:
-            logger.error(f"获取媒体信息失败: {e}")
-            return {}
+            logger.error(f"获取媒体信息失败: {str(e)}")
+            return {
+                'filename': Path(input_path).name,
+                'format': 'unknown',
+                'duration': 0.0,
+                'size': 0,
+                'bit_rate': 0,
+                'streams': []
+            }
 
     def format_size(self, size_bytes: int) -> str:
         """格式化文件大小"""
@@ -138,26 +183,14 @@ class WhisperSubtitleGenerator:
                           f"{stream['channels']}ch")
         logger.info(separator)
 
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
     def generate_subtitles(self, input_path: str, language: str, translate: bool, device_id: str, model_name: str):
         """生成字幕文件"""
         if not os.path.exists(input_path):
             raise FileNotFoundError(f"文件不存在: {input_path}")
 
-<<<<<<< HEAD
         media_info = self.get_media_info(input_path)
         self.log_media_info(media_info)
 
-=======
-
-        media_info = self.get_media_info(input_path)
-        self.log_media_info(media_info)
-
-
->>>>>>> dev
         output_dir = os.path.dirname(input_path)
         base_name = os.path.splitext(os.path.basename(input_path))[0]
         
@@ -225,7 +258,7 @@ class WhisperSubtitleGenerator:
             "traditional": os.path.join(output_dir, f"{base_name}_zh_hant.srt")
         }
 
-        # 添加其他语���的输出路径
+        # 添加其他语言的输出路径
         for lang in self.languages:
             subtitle_paths[lang["name"]] = os.path.join(
                 output_dir, 

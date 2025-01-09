@@ -17,7 +17,7 @@ class WhisperSubtitleGenerator:
         :param config: Whisper 配置字典
         """
         logger.debug("初始化字幕生成器")
-
+        self.translator = None
         self.cc = opencc.OpenCC("s2t")  # 创建 OpenCC 实例用于简体到繁体转换
         self.languages = languages or []
 

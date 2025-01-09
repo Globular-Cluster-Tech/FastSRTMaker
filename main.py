@@ -126,7 +126,7 @@ def process_subtitle_file(input_path: str, generator: WhisperSubtitleGenerator):
         output_dir=output_dir
     )
     
-    logger.info("\n生成的多语言字幕文件:")
+    logger.info("生成的多语言字幕文件:")
     for lang, path in subtitle_paths.items():
         logger.info(f"{lang}: {path}")
 
